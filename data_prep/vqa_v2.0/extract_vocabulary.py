@@ -18,6 +18,11 @@ parser.add_argument("--input_files",
                     required=True,
                     help="input question json files, \
                          if more than 1, split by space")
+parser.add_argument("--caption_files",
+                    nargs='+',
+                    required=False,
+                    help="input question json files, \
+                         if more than 1, split by space")
 parser.add_argument("--out_dir",
                     type=str,
                     default="./",
@@ -31,6 +36,7 @@ parser.add_argument("--min_freq",
 args = parser.parse_args()
 
 input_files = args.input_files
+caption_files = args.caption_files
 out_dir = args.out_dir
 min_freq = args.min_freq
 
@@ -52,6 +58,16 @@ for inx, question in enumerate(questions):
     question_length[inx] = len(words)
     word_count.update(words)
 
+if caption_files is not None:
+    captions = []
+    caption_length = []
+    for caption_file in caption_files:
+        with open(caption_file, 'r') as f:
+            annotations = json.load(f)["annotations"]
+            for annot in annotations:
+                word_count.update(tokenize(annot["caption"]))
+                caption_length.append(len(annot["caption"]))
+
 vocabulary = [w[0] for w in word_count.items() if w[1] >= min_freq]
 vocabulary.sort()
 vocabulary = ['<unk>'] + vocabulary
@@ -63,3 +79,7 @@ with open(vocab_file, 'w') as f:
 
 print("min question len=", min(question_length))
 print("max question len=", max(question_length))
+
+if caption_files is not None:
+    print("min caption len=", min(caption_length))
+    print("max caption len=", max(caption_length))
