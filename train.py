@@ -170,19 +170,25 @@ if __name__ == '__main__':
     dump_config(cfg, config_to_write)
 
     train_dataSet = prepare_train_data_set(**cfg['data'], **cfg['model'])
+    print(train_dataSet.__getitem__(0))
 
     my_model = build_model(cfg, train_dataSet)
 
     model = my_model
     if hasattr(my_model, 'module'):
         model = my_model.module
+    print(model)
+    model = model.cuda()
 
-    params = [{'params': model.image_embedding_models_list.parameters()},
-              {'params': model.question_embedding_models.parameters()},
-              {'params': model.multi_modal_combine.parameters()},
-              {'params': model.classifier.parameters()},
-              {'params': model.image_feature_encode_list.parameters(),
-               'lr': cfg.optimizer.par.lr * 0.1}]
+#     params = [{'params': model.image_embedding_models_list.parameters()},
+#               {'params': model.question_embedding_models.parameters()},
+#               {'params': model.multi_modal_combine.parameters()},
+#               {'params': model.classifier.parameters()},
+#               {'params': model.image_feature_encode_list.parameters(),
+#                'lr': cfg.optimizer.par.lr * 0.1}]
+    params = [{'params': model.question_emb.parameters()},
+              {'params': model.caption_emb.parameters()},
+              {'params': model.linear.parameters()}]
 
     my_optim = getattr(optim, cfg.optimizer.method)(
         params, **cfg.optimizer.par)

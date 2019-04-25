@@ -234,14 +234,19 @@ class vqa_dataset(Dataset):
         return image_feats_return, image_boxes, image_loc
 
     def __getitem__(self, idx):
-        input_seq = np.zeros((self.T_encoder), np.int32)
+        input_seq = np.zeros((self.T_encoder), np.int64)
+        caption_seq = np.zeros((self.T_encoder * 2), np.int64)
         idx += self.first_element_idx
         iminfo = self.imdb[idx]
         question_inds = (
             [self.vocab_dict.word2idx(w) for w in iminfo['question_tokens']])
         seq_length = len(question_inds)
+        caption_inds = ([self.vocab_dict.word2idx(w) for w in iminfo['caption_tokens']])
+        caption_length = len(caption_inds)
         read_len = min(seq_length, self.T_encoder)
         input_seq[:read_len] = question_inds[:read_len]
+        read_len = min(caption_length, self.T_encoder * 2)
+        caption_seq[:read_len] = caption_inds[:read_len]
 
         image_file_name = self.imdb[idx]['feature_path']
         image_feats, image_boxes, image_loc = (
@@ -280,7 +285,9 @@ class vqa_dataset(Dataset):
                 gt_layout_tokens, self.T_decoder))
 
         sample = dict(input_seq_batch=input_seq,
-                      seq_length_batch=seq_length)
+                      seq_length_batch=seq_length,
+                      caption_batch=caption_seq,
+                      caption_length_batch=caption_length)
 
         for im_idx, image_feat in enumerate(image_feats):
             if im_idx == 0:

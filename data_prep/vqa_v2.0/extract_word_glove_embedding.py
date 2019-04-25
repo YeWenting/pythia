@@ -13,7 +13,7 @@ from dataset_utils.text_processing import VocabDict
 
 
 def subset_weights(glove_file, vocabulary_file):
-    with open(glove_file, 'r') as f:
+    with open(glove_file, 'r', encoding="utf-8") as f:
         entries = f.readlines()
     emb_dim = len(entries[0].split(' ')) - 1
     print('embedding dim is %d' % emb_dim)

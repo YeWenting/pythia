@@ -16,9 +16,9 @@ from config.config import cfg
 
 def build_question_encoding_module(method, par, num_vocab):
     if method == "default_que_embed":
-        return QuestionEmbeding(num_vocab, **par)
+        return QuestionEmbeding(num_vocab=num_vocab, **par)
     elif method == "att_que_embed":
-        return AttQuestionEmbedding(num_vocab, **par)
+        return AttQuestionEmbedding(num_vocab=num_vocab, **par)
     else:
         raise NotImplementedError(
             "unknown question encoding model %s" % method)
@@ -35,14 +35,20 @@ class QuestionEmbeding(nn.Module):
         self.gru = nn.GRU(
             input_size=kwargs['embedding_dim'],
             hidden_size=kwargs['LSTM_hidden_size'],
-            num_layers=kwargs['lstm_layer'],
-            dropout=kwargs['lstm_dropout'],
+            num_layers=kwargs['LSTM_layer'],
+            dropout=kwargs['dropout'],
             batch_first=True)
         self.batch_first = True
 
-        if 'embedding_init' in kwargs and kwargs['embedding_init'] is not None:
-            self.embedding.weight.data.copy_(
-                torch.from_numpy(kwargs['embedding_init']))
+        if 'embedding_init_file' in kwargs \
+                and kwargs['embedding_init_file'] is not None:
+            if os.path.isabs(kwargs['embedding_init_file']):
+                embedding_file = kwargs['embedding_init_file']
+            else:
+                embedding_file = os.path.join(
+                    cfg.data.data_root_dir, kwargs['embedding_init_file'])
+            embedding_init = np.load(embedding_file)
+            self.embedding.weight.data.copy_(torch.from_numpy(embedding_init))
 
     def forward(self, input_text):
         embeded_txt = self.embedding(input_text)

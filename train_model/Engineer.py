@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import sys
 import os
+from torch.nn.utils.rnn import pad_sequence
 from torch.autograd import Variable
 from global_variables.global_variables import use_cuda
 import torch.nn.functional as F
@@ -59,7 +60,7 @@ def save_a_report(i_iter, train_loss, train_acc, train_avg_acc, report_timer, wr
 
     print("iter:", i_iter, "train_loss: %.4f" % train_loss, " train_score: %.4f" % train_acc,
           " avg_train_score: %.4f" % train_avg_acc, "val_score: %.4f" % val_acc,
-          "val_loss: %.4f" % val_loss.data[0], "time(s): % s" % report_timer.end())
+          "val_loss: %.4f" % val_loss.detach().cpu().item(), "time(s): % s" % report_timer.end())
     sys.stdout.flush()
     report_timer.start()
 
@@ -67,7 +68,7 @@ def save_a_report(i_iter, train_loss, train_acc, train_avg_acc, report_timer, wr
     writer.add_scalar('train_score', train_acc, i_iter)
     writer.add_scalar('train_score_avg', train_avg_acc, i_iter)
     writer.add_scalar('val_score', val_score, i_iter)
-    writer.add_scalar('val_loss', val_loss.data[0], i_iter)
+    writer.add_scalar('val_loss', val_loss.detach().cpu().item(), i_iter)
     for name, param in myModel.named_parameters():
         writer.add_histogram(name, param.clone().cpu().data.numpy(), i_iter)
 
@@ -149,7 +150,7 @@ def one_stage_train(myModel, data_reader_trn, my_optimizer,
             my_optimizer.step()
 
             if i_iter % report_interval == 0:
-                save_a_report(i_iter, total_loss.data[0], accuracy, avg_accuracy, report_timer,
+                save_a_report(i_iter, total_loss.detach().cpu().item(), accuracy, avg_accuracy, report_timer,
                               writer, data_reader_eval,myModel, loss_criterion)
 
             if i_iter % snapshot_interval == 0 or i_iter == max_iter:
@@ -177,7 +178,7 @@ def evaluate_a_batch(batch, myModel, loss_criterion):
                                  input_answers_variable.data))
     total_loss = loss_criterion(logit_res, input_answers_variable)
 
-    return predicted_scores / n_sample, total_loss.data[0]
+    return predicted_scores / n_sample, total_loss.detach().cpu().item()
 
 
 def compute_a_batch(batch, my_model, eval_mode, loss_criterion=None, add_graph=False, log_dir=None):
@@ -205,7 +206,7 @@ def one_stage_eval_model(data_reader_eval, myModel, loss_criterion=None):
         score_tot += score
         n_sample_tot += n_sample
         if loss is not None:
-            loss_tot += loss.data[0] * n_sample
+            loss_tot += loss.detach().cpu().item() * n_sample
     return score_tot / n_sample_tot, loss_tot / n_sample_tot, n_sample_tot
 
 
@@ -217,11 +218,14 @@ def one_stage_run_model(batch, my_model, eval_mode, add_graph=False, log_dir=Non
 
     input_text_seqs = batch['input_seq_batch']
     input_images = batch['image_feat_batch']
+    input_captions = batch['caption_batch']
     input_txt_variable = Variable(input_text_seqs.type(torch.LongTensor))
     image_feat_variable = Variable(input_images)
+    captions_variable = Variable(input_captions)
     if use_cuda:
         input_txt_variable = input_txt_variable.cuda()
         image_feat_variable = image_feat_variable.cuda()
+        captions_variable = captions_variable.cuda()
 
     image_feat_variables = [image_feat_variable]
 
@@ -246,7 +250,8 @@ def one_stage_run_model(batch, my_model, eval_mode, add_graph=False, log_dir=Non
 
     logit_res = my_model(input_question_variable=input_txt_variable,
                          image_dim_variable=image_dim_variable,
-                         image_feat_variables=image_feat_variables)
+                         image_feat_variables=image_feat_variables,
+                         input_captions_variable=captions_variable)
 
     return logit_res
 

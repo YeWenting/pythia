@@ -28,6 +28,7 @@ def build_imdb(image_set,
                                    'v2_mscoco_%s_annotations.json')
     question_file = os.path.join(data_dir,
                                  'v2_OpenEnded_mscoco_%s_questions.json')
+    caption_file = os.path.join(data_dir, "captions_%s.json")
 
     print('building imdb %s' % image_set)
     has_answer = False
@@ -57,6 +58,10 @@ def build_imdb(image_set,
 
     with open(question_file % image_set) as f:
         questions = json.load(f)['questions']
+    with open(caption_file % image_set) as f:
+        captions = json.load(f)["annotations"]
+        iid2caption_dict = {ann["image_id"]: ann["caption"] for ann in captions}
+
     coco_set_name = (coco_set_name
                      if coco_set_name is not None
                      else image_set.replace('-dev', ''))
@@ -74,12 +79,17 @@ def build_imdb(image_set,
         question_str = q['question']
         question_tokens = text_processing.tokenize(question_str)
 
+        # load captions
+        caption_str = iid2caption_dict[image_id]
+        caption_tokens = text_processing.tokenize(caption_str)
+
         iminfo = dict(image_name=image_name,
                       image_id=image_id,
                       question_id=question_id,
                       feature_path=feature_path,
                       question_str=question_str,
-                      question_tokens=question_tokens)
+                      question_tokens=question_tokens,
+                      caption_tokens=caption_tokens)
 
         # load answers
         if load_answer:
@@ -122,7 +132,7 @@ if __name__ == '__main__':
 
     imdb_train2014 = build_imdb('train2014', valid_answer_set)
     imdb_val2014 = build_imdb('val2014', valid_answer_set)
-    imdb_test2015 = build_imdb('test2015', valid_answer_set)
+    # imdb_test2015 = build_imdb('test2015', valid_answer_set)
 
     imdb_dir = os.path.join(out_dir, 'imdb')
     os.makedirs(imdb_dir, exist_ok=True)
@@ -130,19 +140,19 @@ if __name__ == '__main__':
             np.array(imdb_train2014))
     np.save(os.path.join(imdb_dir, 'imdb_val2014.npy'),
             np.array(imdb_val2014))
-    np.save(os.path.join(imdb_dir, 'imdb_test2015.npy'),
-            np.array(imdb_test2015))
+    # np.save(os.path.join(imdb_dir, 'imdb_test2015.npy'),
+    #         np.array(imdb_test2015))
 
-    imdb_minival2014 = build_imdb('minival2014',
-                                  valid_answer_set,
-                                  coco_set_name="val2014",
-                                  annotation_set_name="val2014")
-    imdb_val2train2014 = build_imdb('val2train2014',
-                                    valid_answer_set,
-                                    coco_set_name="val2014",
-                                    annotation_set_name="val2014")
+    # imdb_minival2014 = build_imdb('minival2014',
+    #                               valid_answer_set,
+    #                               coco_set_name="val2014",
+    #                               annotation_set_name="val2014")
+    # imdb_val2train2014 = build_imdb('val2train2014',
+    #                                 valid_answer_set,
+    #                                 coco_set_name="val2014",
+    #                                 annotation_set_name="val2014")
 
-    np.save(os.path.join(imdb_dir, 'imdb_minival2014.npy'),
-            np.array(imdb_minival2014))
-    np.save(os.path.join(imdb_dir, 'imdb_val2train2014.npy'),
-            np.array(imdb_val2train2014))
+    # np.save(os.path.join(imdb_dir, 'imdb_minival2014.npy'),
+    #         np.array(imdb_minival2014))
+    # np.save(os.path.join(imdb_dir, 'imdb_val2train2014.npy'),
+    #         np.array(imdb_val2train2014))

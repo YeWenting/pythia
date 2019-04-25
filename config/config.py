@@ -30,7 +30,7 @@ __C.exp_name = "baseline"
 __C.data = AttrDict()
 __C.data.dataset = "vqa_2.0"
 __C.data.num_workers = 0
-__C.data.batch_size = 512
+__C.data.batch_size = 256
 __C.data.image_depth_first = False
 __C.data.question_max_len = 14
 __C.data.image_fast_reader = False
@@ -41,12 +41,11 @@ __C.data.data_root_dir = "data"
 __C.data.vocab_question_file = "vocabulary_vqa.txt"
 __C.data.vocab_answer_file = "answers_vqa.txt"
 
-__C.data.image_feat_train = ["rcnn_10_100/vqa/train2014",
-                             "rcnn_10_100/vqa/val2014"]
+__C.data.image_feat_train = ["rcnn_10_100/vqa/train2014"]
 __C.data.imdb_file_train = ["imdb/imdb_train2014.npy",
-                            "imdb/imdb_val2train2014.npy"]
+                            ]  #  "imdb/imdb_val2train2014.npy" 
 
-__C.data.imdb_file_val = ["imdb/imdb_minival2014.npy"]
+__C.data.imdb_file_val = ["imdb/imdb_val2014.npy"] # ["imdb/imdb_minival2014.npy"]
 __C.data.image_feat_val = ["rcnn_10_100/vqa/val2014"]
 
 __C.data.imdb_file_test = ["imdb/imdb_test2015.npy"]
