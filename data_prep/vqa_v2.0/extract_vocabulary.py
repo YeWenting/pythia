@@ -20,6 +20,11 @@ parser.add_argument("--input_files",
                     required=True,
                     help="input question json files, \
                          if more than 1, split by space")
+parser.add_argument("--caption_files",
+                    nargs='+',
+                    required=False,
+                    help="input question json files, \
+                         if more than 1, split by space")
 parser.add_argument("--out_dir",
                     type=str,
                     default="./",
@@ -37,6 +42,7 @@ parser.add_argument("--min_freq",
 args = parser.parse_args()
 
 input_files = args.input_files
+caption_files = args.caption_files
 out_dir = args.out_dir
 min_freq = args.min_freq
 caption_files = args.caption_files
